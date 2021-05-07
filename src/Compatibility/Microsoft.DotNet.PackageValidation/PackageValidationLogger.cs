@@ -7,7 +7,7 @@ using NuGet.Common;
 
 namespace Microsoft.DotNet.PackageValidation
 {
-    public class PackageValidationLogger : ILogger
+    internal class PackageValidationLogger : ILogger
     {
         public void Log(LogLevel level, string data) => throw new NotImplementedException();
         public void Log(ILogMessage message) => throw new NotImplementedException();

@@ -18,19 +18,19 @@ namespace Microsoft.DotNet.PackageValidation
     /// </summary>
     public class CompatibleTfmValidator
     {
+        internal ApiCompatRunner apiCompatRunner;
+        internal ILogger log = new PackageValidationLogger();
+
         private static HashSet<string> s_diagList = new HashSet<string>{ DiagnosticIds.CompatibleRuntimeRidLessAsset, DiagnosticIds.ApplicableCompileTimeAsset };
         private static Dictionary<NuGetFramework, HashSet<NuGetFramework>> s_packageTfmMapping = InitializeTfmMappings();
 
         private readonly bool _runApiCompat;
-        private readonly ApiCompatRunner _apiCompatRunner;
-        private readonly ILogger _log;
         private readonly DiagnosticBag<IDiagnostic> _diagnosticBag;
 
-        public CompatibleTfmValidator(string noWarn, (string, string)[] ignoredDifferences, bool runApiCompat, ILogger log)
+        public CompatibleTfmValidator(string noWarn, (string, string)[] ignoredDifferences, bool runApiCompat)
         {
             _runApiCompat = runApiCompat;
-            _log = log;
-            _apiCompatRunner = new(noWarn, ignoredDifferences, _log);
+            apiCompatRunner = new(noWarn, ignoredDifferences);
             _diagnosticBag = new(noWarn?.Split(';')?.Where(t => s_diagList.Contains(t)), ignoredDifferences);
         }
 
@@ -60,7 +60,7 @@ namespace Microsoft.DotNet.PackageValidation
                     if (!_diagnosticBag.Filter(DiagnosticIds.ApplicableCompileTimeAsset, framework.ToString()))
                     {
                         string message = string.Format(Resources.NoCompatibleCompileTimeAsset, framework.ToString());
-                        _log.LogError(DiagnosticIds.ApplicableCompileTimeAsset + " " + message);
+                        log.LogError(DiagnosticIds.ApplicableCompileTimeAsset + " " + message);
                     }
                     break;
                 }
@@ -71,14 +71,14 @@ namespace Microsoft.DotNet.PackageValidation
                     if (!_diagnosticBag.Filter(DiagnosticIds.CompatibleRuntimeRidLessAsset, framework.ToString()))
                     {
                         string message = string.Format(Resources.NoCompatibleRuntimeAsset, framework.ToString());
-                        _log.LogError(DiagnosticIds.CompatibleRuntimeRidLessAsset + " " + message);
+                        log.LogError(DiagnosticIds.CompatibleRuntimeRidLessAsset + " " + message);
                     }
                 }
                 else
                 {
                     if (_runApiCompat)
                     {
-                        _apiCompatRunner.QueueApiCompat(package.PackagePath, 
+                        apiCompatRunner.QueueApiCompat(package.PackagePath, 
                             compileTimeAsset.Path,
                             package.PackagePath,
                             runtimeAsset.Path,
@@ -96,14 +96,14 @@ namespace Microsoft.DotNet.PackageValidation
                         if (!_diagnosticBag.Filter(DiagnosticIds.CompatibleRuntimeRidSpecificAsset, framework.ToString() + "-" + rid))
                         {
                             string message = string.Format(Resources.NoCompatibleRidSpecificRuntimeAsset, framework.ToString(), rid);
-                            _log.LogError(DiagnosticIds.CompatibleRuntimeRidSpecificAsset + " " + message);
+                            log.LogError(DiagnosticIds.CompatibleRuntimeRidSpecificAsset + " " + message);
                         }
                     }
                     else
                     {
                         if (_runApiCompat)
                         {
-                            _apiCompatRunner.QueueApiCompat(package.PackagePath, 
+                            apiCompatRunner.QueueApiCompat(package.PackagePath, 
                                 compileTimeAsset.Path,
                                 package.PackagePath, 
                                 runtimeAsset.Path,
@@ -115,7 +115,7 @@ namespace Microsoft.DotNet.PackageValidation
                 }
             }
 
-            _apiCompatRunner.RunApiCompat();
+            apiCompatRunner.RunApiCompat();
         }
 
         private static Dictionary<NuGetFramework, HashSet<NuGetFramework>> InitializeTfmMappings()

@@ -29,7 +29,7 @@ namespace Microsoft.DotNet.PackageValidation.Tests
             };
 
             Package package = new("TestPackage", "1.0.0", filePaths, null, null);
-            new CompatibleTfmValidator(string.Empty, null, false, _logger).Validate(package);
+            new CompatibleTfmValidator(string.Empty, null, false) { log = _logger }.Validate(package);
             Assert.Single(_logger.errors);
             Assert.Equal("PKV004 There is no compatible runtime asset for target framework .NETCoreApp,Version=v3.1 in the package.", _logger.errors[0]);
         }
@@ -44,7 +44,7 @@ namespace Microsoft.DotNet.PackageValidation.Tests
             };
 
             Package package = new("TestPackage", "1.0.0", filePaths, null, null);
-            new CompatibleTfmValidator(string.Empty, null, false, _logger).Validate(package);
+            new CompatibleTfmValidator(string.Empty, null, false) { log = _logger }.Validate(package); ;
             Assert.NotEmpty(_logger.errors);
             Assert.Contains("PKV004 There is no compatible runtime asset for target framework .NETStandard,Version=v2.0 in the package.", _logger.errors);
         }
@@ -76,7 +76,9 @@ namespace PackageValidationTests
             var result = packCommand.Execute();
             Assert.Equal(string.Empty, result.StdErr);
             Package package = NupkgParser.CreatePackage(packCommand.GetNuGetPackage(), null);
-            new CompatibleFrameworkInPackageValidator(string.Empty, null, _logger).Validate(package);
+            var cfpv = new CompatibleFrameworkInPackageValidator(string.Empty, null);
+            cfpv.apiCompatRunner.log = _logger;
+            cfpv.Validate(package);
             Assert.NotEmpty(_logger.errors);
             // TODO: add asserts for assembly and header metadata.
             Assert.Contains("CP0002 : Member 'PackageValidationTests.First.test(string)' exists on the left but not on the right", _logger.errors);
@@ -94,7 +96,7 @@ namespace PackageValidationTests
             };
 
             Package package = new("TestPackage", "1.0.0", filePaths, null, null);
-            new CompatibleTfmValidator(string.Empty, null, false, _logger).Validate(package);
+            new CompatibleTfmValidator(string.Empty, null, false) { log = _logger }.Validate(package);
             Assert.Empty(_logger.errors);
         }
     }

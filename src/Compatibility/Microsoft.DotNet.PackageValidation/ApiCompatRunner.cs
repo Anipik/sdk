@@ -17,13 +17,13 @@ namespace Microsoft.DotNet.PackageValidation
     /// </summary>
     public class ApiCompatRunner
     {
+        internal ILogger log = new PackageValidationLogger();
+
         private List<(string leftAssemblyPackagePath, string leftAssemblyRelativePath, string rightAssemblyPackagePath, string rightAssemblyRelativePath, string assemblyName, string compatibilityReason, string header)> _queue = new();
-        private readonly ILogger _log;
         private readonly ApiComparer _differ = new();
 
-        public ApiCompatRunner(string noWarn, (string, string)[] ignoredDifferences, ILogger log)
+        public ApiCompatRunner(string noWarn, (string, string)[] ignoredDifferences)
         {
-            _log = log;
             _differ.NoWarn = noWarn;
             _differ.IgnoredDifferences = ignoredDifferences;
         }
@@ -46,13 +46,13 @@ namespace Microsoft.DotNet.PackageValidation
 
                     if (differences.Any())
                     {
-                        _log.LogError(apicompatTuples.compatibilityReason);
-                        _log.LogError(apicompatTuples.header);
+                        log.LogError(apicompatTuples.compatibilityReason);
+                        log.LogError(apicompatTuples.header);
                     }
 
                     foreach (CompatDifference difference in differences)
                     {
-                        _log.LogError(difference.ToString());
+                        log.LogError(difference.ToString());
                     }
                 }
             }

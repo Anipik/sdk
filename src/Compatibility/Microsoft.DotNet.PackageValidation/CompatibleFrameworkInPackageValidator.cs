@@ -16,13 +16,11 @@ namespace Microsoft.DotNet.PackageValidation
     /// </summary>
     public class CompatibleFrameworkInPackageValidator
     {
-        private readonly ApiCompatRunner _apiCompatRunner;
-        private readonly ILogger _log;
+        internal ApiCompatRunner apiCompatRunner;
 
-        public CompatibleFrameworkInPackageValidator(string noWarn, (string, string)[] ignoredDifferences, ILogger log)
+        public CompatibleFrameworkInPackageValidator(string noWarn, (string, string)[] ignoredDifferences)
         {
-            _log = log;
-            _apiCompatRunner = new(noWarn, ignoredDifferences, _log);
+            apiCompatRunner = new(noWarn, ignoredDifferences);
         }
 
         /// <summary>
@@ -56,7 +54,7 @@ namespace Microsoft.DotNet.PackageValidation
 
                 if (compatibleFrameworkAsset != null)
                 {
-                    _apiCompatRunner.QueueApiCompat(package.PackagePath, 
+                    apiCompatRunner.QueueApiCompat(package.PackagePath, 
                         compatibleFrameworkAsset.Path,
                         package.PackagePath,
                         compileTimeAsset.Path,
@@ -66,7 +64,7 @@ namespace Microsoft.DotNet.PackageValidation
                 }
             }
 
-            _apiCompatRunner.RunApiCompat();
+            apiCompatRunner.RunApiCompat();
         }
     }
 }

@@ -18,20 +18,19 @@ namespace Microsoft.DotNet.PackageValidation
     /// </summary>
     public class BaselinePackageValidator
     {
-        private static HashSet<string> s_diagList = new HashSet<string>{ DiagnosticIds.TargetFrameworkDropped, DiagnosticIds.TargetFrameworkAndRidPairDropped };
-
+        internal ApiCompatRunner apiCompatRunner;
+        internal ILogger log = new PackageValidationLogger();
+ 
+        private static HashSet<string> s_diagList = new HashSet<string>{ DiagnosticIds.TargetFrameworkDropped, DiagnosticIds.TargetFrameworkAndRidPairDropped }; 
         private readonly Package _baselinePackage;
         private readonly bool _runApiCompat;
-        private readonly ApiCompatRunner _apiCompatRunner;
-        private readonly ILogger _log;
         private readonly DiagnosticBag<IDiagnostic> _diagnosticBag;
 
-        public BaselinePackageValidator(Package baselinePackage, string noWarn, (string, string)[] ignoredDifferences, bool runApiCompat, ILogger log)
+        public BaselinePackageValidator(Package baselinePackage, string noWarn, (string, string)[] ignoredDifferences, bool runApiCompat)
         {
             _baselinePackage = baselinePackage;
             _runApiCompat = runApiCompat;
-            _log = log;
-            _apiCompatRunner = new(noWarn, ignoredDifferences, _log);
+            apiCompatRunner = new(noWarn, ignoredDifferences);
             _diagnosticBag = new(noWarn?.Split(';')?.Where(t => s_diagList.Contains(t)), ignoredDifferences);
         }
 
@@ -52,12 +51,12 @@ namespace Microsoft.DotNet.PackageValidation
                         if (!_diagnosticBag.Filter(DiagnosticIds.TargetFrameworkDropped, baselineTargetFramework.ToString()))
                         {
                             string message = string.Format(Resources.MissingTargetFramework, baselineTargetFramework.ToString());
-                            _log.LogError(DiagnosticIds.TargetFrameworkDropped + " " + message);
+                            log.LogError(DiagnosticIds.TargetFrameworkDropped + " " + message);
                         }
                     }
                     else if (_runApiCompat)
                     {
-                        _apiCompatRunner.QueueApiCompat(_baselinePackage.PackagePath,
+                        apiCompatRunner.QueueApiCompat(_baselinePackage.PackagePath,
                             baselineCompileTimeAsset.Path,
                             package.PackagePath,
                             latestCompileTimeAsset.Path,
@@ -77,14 +76,14 @@ namespace Microsoft.DotNet.PackageValidation
                     if (!_diagnosticBag.Filter(DiagnosticIds.TargetFrameworkDropped, baselineTargetFramework.ToString()))
                     {
                         string message = string.Format(Resources.MissingTargetFramework, baselineTargetFramework.ToString());
-                        _log.LogError(DiagnosticIds.TargetFrameworkDropped + " " + message);
+                        log.LogError(DiagnosticIds.TargetFrameworkDropped + " " + message);
                     }
                 }
                 else
                 {
                     if (_runApiCompat)
                     {
-                        _apiCompatRunner.QueueApiCompat(_baselinePackage.PackagePath, 
+                        apiCompatRunner.QueueApiCompat(_baselinePackage.PackagePath, 
                             baselineRuntimeAsset.Path,
                             package.PackagePath, 
                             latestRuntimeAsset.Path,
@@ -105,14 +104,14 @@ namespace Microsoft.DotNet.PackageValidation
                     if (!_diagnosticBag.Filter(DiagnosticIds.TargetFrameworkDropped, baselineTargetFramework.ToString() + "-" + baselineRid))
                     {
                         string message = string.Format(Resources.MissingTargetFrameworkAndRid, baselineTargetFramework.ToString(), baselineRid);
-                        _log.LogError(DiagnosticIds.TargetFrameworkAndRidPairDropped + " " + message);
+                        log.LogError(DiagnosticIds.TargetFrameworkAndRidPairDropped + " " + message);
                     }
                 }
                 else
                 {
                     if (_runApiCompat)
                     {
-                        _apiCompatRunner.QueueApiCompat(_baselinePackage.PackagePath, 
+                        apiCompatRunner.QueueApiCompat(_baselinePackage.PackagePath, 
                             baselineRuntimeSpecificAsset.Path,
                             package.PackagePath, 
                             latestRuntimeSpecificAsset.Path,
@@ -123,7 +122,7 @@ namespace Microsoft.DotNet.PackageValidation
                 }
             }
             
-            _apiCompatRunner.RunApiCompat();
+            apiCompatRunner.RunApiCompat();
         }
     }
 }
