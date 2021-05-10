@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.DotNet.ApiCompatibility;
 using Microsoft.DotNet.ApiCompatibility.Abstractions;
-using NuGet.Common;
+using Microsoft.NET.Build.Tasks;
 using NuGet.ContentModel;
 using NuGet.Frameworks;
 
@@ -16,21 +16,21 @@ namespace Microsoft.DotNet.PackageValidation
     /// Validates that no target framework / rid support is dropped in the latest package.
     /// Reports all the breaking changes in the latest package.
     /// </summary>
-    public class BaselinePackageValidator
+    internal class BaselinePackageValidator
     {
-        internal ApiCompatRunner apiCompatRunner;
-        internal ILogger log = new PackageValidationLogger();
- 
         private static HashSet<string> s_diagList = new HashSet<string>{ DiagnosticIds.TargetFrameworkDropped, DiagnosticIds.TargetFrameworkAndRidPairDropped }; 
         private readonly Package _baselinePackage;
         private readonly bool _runApiCompat;
         private readonly DiagnosticBag<IDiagnostic> _diagnosticBag;
+        private ApiCompatRunner _apiCompatRunner;
+        private Logger _log;
 
-        public BaselinePackageValidator(Package baselinePackage, string noWarn, (string, string)[] ignoredDifferences, bool runApiCompat)
+        public BaselinePackageValidator(Package baselinePackage, string noWarn, (string, string)[] ignoredDifferences, bool runApiCompat, Logger log)
         {
             _baselinePackage = baselinePackage;
             _runApiCompat = runApiCompat;
-            apiCompatRunner = new(noWarn, ignoredDifferences);
+            _log = log;
+            _apiCompatRunner = new(noWarn, ignoredDifferences, _log);
             _diagnosticBag = new(noWarn?.Split(';')?.Where(t => s_diagList.Contains(t)), ignoredDifferences);
         }
 
@@ -51,12 +51,12 @@ namespace Microsoft.DotNet.PackageValidation
                         if (!_diagnosticBag.Filter(DiagnosticIds.TargetFrameworkDropped, baselineTargetFramework.ToString()))
                         {
                             string message = string.Format(Resources.MissingTargetFramework, baselineTargetFramework.ToString());
-                            log.LogError(DiagnosticIds.TargetFrameworkDropped + " " + message);
+                            _log.LogNonSdkError(DiagnosticIds.TargetFrameworkDropped + " " + message);
                         }
                     }
                     else if (_runApiCompat)
                     {
-                        apiCompatRunner.QueueApiCompat(_baselinePackage.PackagePath,
+                        _apiCompatRunner.QueueApiCompat(_baselinePackage.PackagePath,
                             baselineCompileTimeAsset.Path,
                             package.PackagePath,
                             latestCompileTimeAsset.Path,
@@ -76,14 +76,14 @@ namespace Microsoft.DotNet.PackageValidation
                     if (!_diagnosticBag.Filter(DiagnosticIds.TargetFrameworkDropped, baselineTargetFramework.ToString()))
                     {
                         string message = string.Format(Resources.MissingTargetFramework, baselineTargetFramework.ToString());
-                        log.LogError(DiagnosticIds.TargetFrameworkDropped + " " + message);
+                        _log.LogNonSdkError(DiagnosticIds.TargetFrameworkDropped + " " + message);
                     }
                 }
                 else
                 {
                     if (_runApiCompat)
                     {
-                        apiCompatRunner.QueueApiCompat(_baselinePackage.PackagePath, 
+                        _apiCompatRunner.QueueApiCompat(_baselinePackage.PackagePath, 
                             baselineRuntimeAsset.Path,
                             package.PackagePath, 
                             latestRuntimeAsset.Path,
@@ -104,14 +104,14 @@ namespace Microsoft.DotNet.PackageValidation
                     if (!_diagnosticBag.Filter(DiagnosticIds.TargetFrameworkDropped, baselineTargetFramework.ToString() + "-" + baselineRid))
                     {
                         string message = string.Format(Resources.MissingTargetFrameworkAndRid, baselineTargetFramework.ToString(), baselineRid);
-                        log.LogError(DiagnosticIds.TargetFrameworkAndRidPairDropped + " " + message);
+                        _log.LogNonSdkError(DiagnosticIds.TargetFrameworkAndRidPairDropped + " " + message);
                     }
                 }
                 else
                 {
                     if (_runApiCompat)
                     {
-                        apiCompatRunner.QueueApiCompat(_baselinePackage.PackagePath, 
+                        _apiCompatRunner.QueueApiCompat(_baselinePackage.PackagePath, 
                             baselineRuntimeSpecificAsset.Path,
                             package.PackagePath, 
                             latestRuntimeSpecificAsset.Path,
@@ -122,7 +122,7 @@ namespace Microsoft.DotNet.PackageValidation
                 }
             }
             
-            apiCompatRunner.RunApiCompat();
+            _apiCompatRunner.RunApiCompat();
         }
     }
 }

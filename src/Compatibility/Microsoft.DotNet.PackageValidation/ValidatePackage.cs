@@ -32,15 +32,13 @@ namespace Microsoft.DotNet.PackageValidation
 
             Package package = NupkgParser.CreatePackage(PackageTargetPath, runtimeGraph);
 
-            new CompatibleTfmValidator(NoWarn, null, RunApiCompat).Validate(package);
-
+            new CompatibleTfmValidator(NoWarn, null, RunApiCompat, Log).Validate(package);
+            new CompatibleFrameworkInPackageValidator(NoWarn, null, Log).Validate(package);
             if (BaselineValidation)
             {
                 Package baselinePackage = NupkgParser.CreatePackage(BaselinePackageTargetPath, runtimeGraph);
-                new BaselinePackageValidator(baselinePackage, NoWarn, null, RunApiCompat).Validate(package);
+                new BaselinePackageValidator(baselinePackage, NoWarn, null, RunApiCompat, Log).Validate(package);
             }
-
-            new CompatibleFrameworkInPackageValidator(NoWarn, null).Validate(package);
         }
     }
 }

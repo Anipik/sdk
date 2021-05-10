@@ -4,8 +4,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.NET.Build.Tasks;
 using NuGet.Client;
-using NuGet.Common;
 using NuGet.ContentModel;
 using NuGet.Frameworks;
 
@@ -16,11 +16,11 @@ namespace Microsoft.DotNet.PackageValidation
     /// </summary>
     public class CompatibleFrameworkInPackageValidator
     {
-        internal ApiCompatRunner apiCompatRunner;
-
-        public CompatibleFrameworkInPackageValidator(string noWarn, (string, string)[] ignoredDifferences)
+        private ApiCompatRunner _apiCompatRunner;
+        
+        internal CompatibleFrameworkInPackageValidator(string noWarn, (string, string)[] ignoredDifferences, Logger log)
         {
-            apiCompatRunner = new(noWarn, ignoredDifferences);
+            _apiCompatRunner = new(noWarn, ignoredDifferences, log);
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace Microsoft.DotNet.PackageValidation
 
                 if (compatibleFrameworkAsset != null)
                 {
-                    apiCompatRunner.QueueApiCompat(package.PackagePath, 
+                    _apiCompatRunner.QueueApiCompat(package.PackagePath, 
                         compatibleFrameworkAsset.Path,
                         package.PackagePath,
                         compileTimeAsset.Path,
@@ -64,7 +64,7 @@ namespace Microsoft.DotNet.PackageValidation
                 }
             }
 
-            apiCompatRunner.RunApiCompat();
+            _apiCompatRunner.RunApiCompat();
         }
     }
 }
