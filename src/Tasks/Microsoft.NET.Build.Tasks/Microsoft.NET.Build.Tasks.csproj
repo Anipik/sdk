@@ -14,6 +14,8 @@
     <OutputType>Library</OutputType>
     <TargetFrameworks>$(SdkTargetFramework);net472</TargetFrameworks>
     <Nullable>annotations</Nullable>
+    <!--We need to compare ISymbols in a special way (by name) and roslyn symbol comparers take more heuristics into consideration.-->
+    <NoWarn>RS1024;$(NoWarn)</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -54,6 +56,8 @@
     <PackageReference Include="Microsoft.NET.HostModel" Version="$(MicrosoftNETHostModelVersion)" />
     <PackageReference Include="NuGet.ProjectModel" Version="$(NuGetProjectModelVersion)" />
     <PackageReference Include="NuGet.Build.Tasks.Pack" Version="$(NuGetBuildTasksPackageVersion)" ExcludeAssets="All" />
+    <PackageReference Include="Microsoft.Bcl.HashCode" Version="1.1.1" />
+    <PackageReference Include="Microsoft.CodeAnalysis" Version="$(MicrosoftCodeAnalysisCSharpPackageVersion)" />
   </ItemGroup>
 
 
@@ -75,10 +79,13 @@
     <Compile Include="..\Common\**\*.cs" LinkBase="Common" />
     <Compile Include="..\..\Resolvers\Microsoft.NET.Sdk.WorkloadManifestReader\**\*.cs" LinkBase="WorkloadManifestReader" />
     <Compile Include="..\..\Resolvers\Microsoft.DotNet.MSBuildSdkResolver\FXVersion.cs" LinkBase="WorkloadManifestReader"/>
+    <Compile Include="..\..\Compatibility\**\*.cs" LinkBase="Compatibility" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="..\Common\Resources\Strings.resx" LinkBase="Resources" GenerateSource="True" Namespace="Microsoft.NET.Build.Tasks" />
+    <EmbeddedResource Include="..\..\Compatibility\Microsoft.DotNet.PackageValidation\Resources.resx" LinkBase="Resources\Compatibility\Microsoft.DotNet.PackageValidation" GenerateSource="True" Namespace="Microsoft.DotNet.PackageValidation" />
+    <EmbeddedResource Include="..\..\Compatibility\Microsoft.DotNet.ApiCompatibility\Resources.resx" LinkBase="Resources\Compatibility\Microsoft.DotNet.ApiCompatibility" GenerateSource="True" Namespace="Microsoft.DotNet.ApiCompatibility" />
     <EmbeddedResource Include="..\..\Resolvers\Microsoft.NET.Sdk.WorkloadManifestReader\Strings.resx" LinkBase="Resources\WorkloadManifestReoder" GenerateSource="True" Namespace="Microsoft.NET.Sdk.Localization"/>
   </ItemGroup>
 
